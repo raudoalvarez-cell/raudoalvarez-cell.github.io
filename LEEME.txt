@@ -1,0 +1,18 @@
+MI MONEDERO — PAQUETE PWA
+
+Contenido:
+- index.html: aplicación
+- manifest.webmanifest: nombre e iconos para instalación
+- sw.js: caché básica para abrir la app sin conexión tras la primera carga
+- icons/: iconos de la app
+
+SIGUIENTE PASO:
+1. Sube todos estos archivos a un sitio web HTTPS (por ejemplo, GitHub Pages).
+2. Abre la URL publicada en Chrome para Android.
+3. Menú ⋮ > Instalar aplicación o Añadir a pantalla de inicio.
+
+IMPORTANTE:
+- Abrir index.html como archivo local NO instala una PWA; necesita una URL HTTPS.
+- Los datos se guardan en el almacenamiento del navegador en ese dispositivo.
+- No hay inicio de sesión, sincronización, cifrado ni respaldo automático.
+- Mantén copias de seguridad exportadas.

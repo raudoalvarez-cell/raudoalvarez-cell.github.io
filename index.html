@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#087f5b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<title>Mi Monedero</title>
+<style>
+:root{--green:#087f5b;--green2:#0aa56f;--bg:#f4f7f6;--ink:#172b25;--muted:#65766f;--line:#dce7e1;--red:#c33d4a;--card:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:linear-gradient(135deg,#066b4c,#0ca66d);color:#fff;padding:22px 18px 26px;border-radius:0 0 24px 24px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-size:22px;font-weight:800}.sub{font-size:13px;opacity:.85;margin-top:3px}
+main{max-width:720px;margin:auto;padding:14px 14px 100px}.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 3px 14px #102f2010;border:1px solid #e9efeb}
+label{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:10px 0 5px}input,select,button{font:inherit}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink);min-height:44px}
+button{border:0;border-radius:12px;padding:12px 14px;background:var(--green);color:#fff;font-weight:700;min-height:44px;cursor:pointer}button.secondary{background:#e8f5ef;color:var(--green)}button.danger{background:#fff0f1;color:var(--red)}button.small{padding:8px 10px;min-height:36px;font-size:13px}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1;min-width:0}.row .fit{flex:0 0 auto}.balance{font-size:32px;font-weight:850;letter-spacing:-.7px;margin:6px 0 14px;overflow-wrap:anywhere}.muted{color:var(--muted);font-size:13px}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{padding:12px;border-radius:13px;background:#f2f8f5}.stat.red{background:#fff3f3}.stat .amount{font-size:19px;font-weight:800;margin-top:4px;overflow-wrap:anywhere}.green-text{color:var(--green)}.red-text{color:var(--red)}
+nav{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;justify-content:center;gap:4px;padding:8px max(8px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom));z-index:5}
+nav button{flex:1;max-width:180px;background:transparent;color:var(--muted);padding:9px 5px;font-size:12px;min-height:52px}nav button.active{background:#e4f5ec;color:var(--green)}
+h2{font-size:18px;margin:2px 0 12px}h3{font-size:15px;margin:0 0 8px}.movement{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #edf1ee}.movement:last-child{border-bottom:0}.bubble{width:40px;height:40px;border-radius:13px;background:#e5f5ed;display:grid;place-items:center;font-size:19px;flex:0 0 auto}.movement-main{flex:1;min-width:0}.movement-title{font-weight:700;overflow-wrap:anywhere}.movement-meta{font-size:12px;color:var(--muted);margin-top:3px}.movement-amount{font-weight:800;white-space:nowrap}.empty{text-align:center;padding:22px;color:var(--muted)}.hidden{display:none!important}.notice{background:#fff8df;border:1px solid #f1e2a8;border-radius:12px;padding:12px;font-size:13px;line-height:1.45;color:#68551b}.pill{font-size:12px;border-radius:999px;background:#e8f5ef;color:var(--green);padding:5px 9px;font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1}.section{display:none}.section.active{display:block}.currency-total{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #edf1ee}.currency-total:last-child{border-bottom:0}
+@media(min-width:600px){main{padding-top:22px}.balance{font-size:38px}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><div class="brand">👛 Mi Monedero</div><div class="sub">Tus ingresos y gastos, organizados</div></div><span class="pill" id="saveBadge">Guardado local</span></div></header>
+<main>
+<div class="card">
+ <div class="row"><div><label for="profileSelect">Perfil activo</label><select id="profileSelect"></select></div><div class="fit" style="align-self:end"><button class="secondary" id="addProfileBtn">+ Perfil</button></div></div>
+ <div class="notice" style="margin-top:12px">Los perfiles y movimientos se guardan en este navegador de este teléfono. No hay cuentas en línea ni sincronización con otros dispositivos. Exporta una copia de seguridad con regularidad.</div>
+</div>
+<section id="home" class="section active">
+ <div class="card"><div class="muted">Saldo por moneda</div><div id="balances"></div></div>
+ <div class="card"><h2>Movimientos recientes</h2><div id="recent"></div><button class="secondary" style="width:100%;margin-top:10px" data-go="movements">Ver todos los movimientos</button></div>
+</section>
+<section id="add" class="section">
+ <div class="card"><h2>Registrar movimiento</h2>
+ <form id="movementForm">
+  <label for="type">Tipo</label><select id="type"><option value="expense">Gasto</option><option value="income">Ingreso</option></select>
+  <label for="amount">Importe</label><input id="amount" type="number" min="0.01" step="0.01" placeholder="Ej. 25.50" required>
+  <label for="currency">Moneda</label><select id="currency"></select>
+  <label for="category">Categoría</label><select id="category"><option>Comida</option><option>Transporte</option><option>Vivienda</option><option>Salud</option><option>Trabajo</option><option>Ventas</option><option>Ocio</option><option>Educación</option><option>Otros</option></select>
+  <label for="description">Descripción</label><input id="description" maxlength="80" placeholder="Ej. Compra del supermercado" required>
+  <label for="date">Fecha</label><input id="date" type="date" required>
+  <button style="width:100%;margin-top:16px" type="submit">Guardar movimiento</button>
+ </form></div>
+</section>
+<section id="movements" class="section">
+ <div class="card"><h2>Historial</h2><label for="filterCurrency">Filtrar por moneda</label><select id="filterCurrency"><option value="all">Todas las monedas</option></select><div id="history"></div></div>
+</section>
+<section id="settings" class="section">
+ <div class="card"><h2>Monedas</h2><div class="muted">Puedes usar monedas distintas. Cada saldo se mantiene separado; no se convierten entre sí automáticamente.</div>
+ <label for="newCurrency">Añadir código de moneda</label><input id="newCurrency" maxlength="3" placeholder="Ej. EUR" autocapitalize="characters">
+ <button id="addCurrencyBtn" style="width:100%;margin-top:10px">Añadir moneda</button><div id="currencyList" style="margin-top:12px"></div></div>
+ <div class="card"><h2>Datos y copia de seguridad</h2><p class="muted">Exporta los perfiles y movimientos a un archivo JSON. Guárdalo en un lugar seguro. No contiene contraseña ni cifrado.</p>
+ <div class="actions"><button id="exportBtn">Exportar copia</button><button class="secondary" id="importBtn">Importar copia</button></div><input id="importFile" type="file" accept="application/json,.json" class="hidden">
+ <button class="danger" id="clearBtn" style="width:100%;margin-top:12px">Borrar todos los datos de este navegador</button></div>
+</section>
+</main>
+<nav><button class="active" data-nav="home">🏠<br>Inicio</button><button data-nav="add">➕<br>Añadir</button><button data-nav="movements">📋<br>Movimientos</button><button data-nav="settings">⚙️<br>Más</button></nav>
+<script>
+(()=> {
+const KEY='miMonederoV1';
+const defaultState={profiles:[{id:'p1',name:'Mi perfil'}],activeProfile:'p1',currencies:['USD','EUR','GBP','MXN','DOP','CAD'],transactions:[]};
+let state=load();
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.profiles)&&Array.isArray(x.transactions)&&Array.isArray(x.currencies))return x;}catch(e){}return structuredClone(defaultState)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$('saveBadge').textContent='Guardado local';}catch(e){alert('El navegador no pudo guardar los datos. Exporta una copia y prueba otro navegador.');}}
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function active(){return state.activeProfile}
+function money(n,c){try{return new Intl.NumberFormat('es-PR',{style:'currency',currency:c,maximumFractionDigits:2}).format(n)}catch(e){return c+' '+Number(n).toFixed(2)}}
+function txs(){return state.transactions.filter(t=>t.profileId===active())}
+function fmtDate(s){try{return new Date(s+'T12:00:00').toLocaleDateString('es-PR',{day:'numeric',month:'short',year:'numeric'})}catch(e){return s}}
+function render(){
+ const ps=$('profileSelect');ps.innerHTML=state.profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===active()?'selected':''}>${esc(p.name)}</option>`).join('');
+ const opts=state.currencies.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+ $('currency').innerHTML=opts;$('filterCurrency').innerHTML='<option value="all">Todas las monedas</option>'+opts;
+ $('currencyList').innerHTML=state.currencies.map(c=>`<div class="currency-total"><span>${esc(c)}</span><span class="muted">${txs().filter(t=>t.currency===c).length} movimientos</span></div>`).join('');
+ const sums={};state.currencies.forEach(c=>sums[c]=0);
+ txs().forEach(t=>{sums[t.currency]=(sums[t.currency]||0)+(t.type==='income'?Number(t.amount):-Number(t.amount))});
+ $('balances').innerHTML=state.currencies.filter(c=>txs().some(t=>t.currency===c)||c==='USD').map(c=>`<div class="currency-total"><span><strong>${esc(c)}</strong></span><strong class="${sums[c]<0?'red-text':'green-text'}">${money(sums[c]||0,c)}</strong></div>`).join('')||'<div class="empty">Añade una moneda para comenzar.</div>';
+ const recent=[...txs()].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt).slice(0,5);
+ $('recent').innerHTML=recent.length?recent.map(txHTML).join(''):'<div class="empty">Todavía no hay movimientos. Pulsa “Añadir” para registrar el primero.</div>';
+ const f=$('filterCurrency').value||'all';const list=[...txs()].filter(t=>f==='all'||t.currency===f).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
+ $('history').innerHTML=list.length?list.map(txHTML).join(''):'<div class="empty">No hay movimientos para mostrar.</div>';
+}
+function txHTML(t){return `<div class="movement"><div class="bubble">${t.type==='income'?'↙️':'↗️'}</div><div class="movement-main"><div class="movement-title">${esc(t.description)}</div><div class="movement-meta">${esc(t.category)} · ${fmtDate(t.date)} · ${esc(t.currency)}</div></div><div class="movement-amount ${t.type==='income'?'green-text':'red-text'}">${t.type==='income'?'+':'−'}${money(Number(t.amount),t.currency)}<br><button class="danger small" data-delete="${esc(t.id)}" style="margin-top:5px">Eliminar</button></div></div>`}
+function go(id){document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===id));render();window.scrollTo(0,0)}
+document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.nav)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+$('profileSelect').addEventListener('change',e=>{state.activeProfile=e.target.value;save();render()});
+$('addProfileBtn').addEventListener('click',()=>{const name=prompt('Nombre del nuevo perfil:');if(!name||!name.trim())return;const p={id:'p'+Date.now(),name:name.trim().slice(0,40)};state.profiles.push(p);state.activeProfile=p.id;save();render()});
+$('date').value=new Date().toISOString().slice(0,10);
+$('movementForm').addEventListener('submit',e=>{e.preventDefault();const amount=Number($('amount').value);if(!Number.isFinite(amount)||amount<=0)return alert('Escribe un importe mayor que cero.');state.transactions.push({id:'t'+Date.now()+Math.random().toString(16).slice(2),profileId:active(),type:$('type').value,amount:Math.round(amount*100)/100,currency:$('currency').value,category:$('category').value,description:$('description').value.trim(),date:$('date').value,createdAt:Date.now()});save();$('amount').value='';$('description').value='';$('date').value=new Date().toISOString().slice(0,10);go('home')});
+$('filterCurrency').addEventListener('change',render);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(b&&confirm('¿Eliminar este movimiento?')){state.transactions=state.transactions.filter(t=>t.id!==b.dataset.delete);save();render()}});
+$('addCurrencyBtn').addEventListener('click',()=>{const c=$('newCurrency').value.trim().toUpperCase();if(!/^[A-Z]{3}$/.test(c))return alert('Introduce un código de moneda de 3 letras, por ejemplo USD o EUR.');if(!state.currencies.includes(c))state.currencies.push(c);$('newCurrency').value='';save();render()});
+$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mi-monedero-copia-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url)});
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!Array.isArray(x.profiles)||!Array.isArray(x.transactions)||!Array.isArray(x.currencies))throw Error();if(!confirm('Importar reemplazará los datos actuales. ¿Continuar?'))return;state=x;if(!state.profiles.some(p=>p.id===state.activeProfile))state.activeProfile=state.profiles[0]?.id;save();render();alert('Copia importada.')}catch(err){alert('No se pudo leer la copia. Elige un archivo JSON exportado desde Mi Monedero.')}finally{e.target.value=''}});
+$('clearBtn').addEventListener('click',()=>{if(confirm('¿Seguro? Se borrarán perfiles y movimientos de este navegador. Exporta una copia antes si quieres conservarlos.')){state=structuredClone(defaultState);save();render();go('home')}});
+render();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
